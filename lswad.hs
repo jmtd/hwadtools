@@ -12,9 +12,9 @@ import qualified Data.ByteString.Lazy as L
 import qualified Data.ByteString.Char8 as C
 import Data.Binary.Get
 import Data.Word
-import Data.Int -- Int32
-import System.IO -- stdin
-import System.Environment -- getArgs
+import Data.Int (Int32)
+import System.IO (stdin, IOMode(..), hSetBinaryMode, openFile)
+import System.Environment (getArgs)
 
 type WadHeader = (L.ByteString, Int32, Int32)
 
@@ -82,9 +82,9 @@ printDir (offs,size,rawname) = do
 header = "  name  \t  size  \t offset "
 
 main = do
-  handle <- getHandle
-  input  <- L.hGetContents handle
-  let (numents,waddir) = runGet getWadDirectory input
-  let dirents = runGet (parseDirectory numents) waddir
-  putStrLn header
-  mapM_ printDir dirents
+    handle <- getHandle
+    input  <- L.hGetContents handle
+    let (numents,waddir) = runGet getWadDirectory input
+    let dirents = runGet (parseDirectory numents) waddir
+    putStrLn header
+    mapM_ printDir dirents
