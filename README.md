@@ -2,7 +2,7 @@
 
 ## About
 
-Doom WAD file manipulation tools, written in Haskell
+Doom WAD file manipulation tools, written in Haskell.
 
 Copyright © Jonathan Dowland 2017
 
