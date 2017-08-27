@@ -22,13 +22,24 @@ data WadInfoCommand = WadInfoLabel String | SomethingElse
 -- with comments/whitespace interspersed freely around them
 wadInfoFile = do
     -- magic <- wadMagic
+    spaces -- fixes test_8, breaks test_24
     result <- wadInfoLine `sepBy` eol
     eof
     return result
 
 eol = char '\n'
 
-wadInfoLine = wadInfoLabel <|> wadInfoComment <|> wadMagic <|> emptyLine
+extendedWadInfoLine x = do
+    xv <- x
+    optional (many (char ' ')) --spaces no good, eats newlines
+    optional wadInfoComment
+    return xv
+
+wadInfoLine = do
+    blah <- wadInfoLabel <|> wadMagic <|> emptyLine
+    optional (many (char ' ')) --spaces no good, eats newlines
+    optional wadInfoComment
+    return blah
 
 -- can we return nowt instead and do away with emptyLine?
 emptyLine = do
@@ -70,11 +81,11 @@ test_0 = (assertRight . parsePatch)  "IWAD"               -- simplest
 test_1 = (assertRight . parsePatch)  "PWAD"
 test_2 = (assertRight . parsePatch)  "#comment\nIWAD"     -- pre-comment
 test_3 = (assertRight . parsePatch)  "PWAD\n#comment"     -- post-comment
-test_4 = (assertRight . parsePatch)  "PWAD#comment"     -- suffixed comment -- failing
-test_5 = (assertRight . parsePatch)  "PWAD #comment" -- failing
+test_4 = (assertRight . parsePatch)  "PWAD#comment"     -- suffixed comment
+test_5 = (assertRight . parsePatch)  "PWAD #comment"
 test_6 = (assertRight . parsePatch)  "IWAD\n"             -- free whitespace
 test_7 = (assertRight . parsePatch)  "IWAD\n\n"
-test_8 = (assertRight . parsePatch)  "\nIWAD\n\n" -- failing
+test_8 = (assertRight . parsePatch)  "\nIWAD\n\n"
 test_9 = (assertRight . parsePatch)  "PWAD\nlabel MAP01"  -- valid label (<8 length)
 test_10 = (assertRight . parsePatch) "PWAD\nlabel MAP01\nlabel MAP01"  -- valid labels (duplicated)
 test_11 = (assertRight . parsePatch) "PWAD\nlabel 01234567" -- valid label (==8 length)
@@ -92,5 +103,6 @@ test_20 = (assertLeft . parsePatch) "# nothing here" -- failing
 test_21 = (assertLeft . parsePatch) "label foo"          -- missing magic -- failing
 test_22 = (assertLeft . parsePatch) "label foo\nIWAD"    -- magic not first -- failing
 test_23 = (assertLeft . parsePatch) "PWAD\nlabel 123456789" -- invalid label (>8 length) -- failing
+test_24 = (assertLeft . parsePatch) "    IWAD"
 
 main = htfMain htf_thisModulesTests
