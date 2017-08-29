@@ -24,7 +24,7 @@ data WadInfoCommand = WadInfoLabel String | SomethingElse
 wadInfoFile = do
     skipMany ((wadInfoComment <|> emptyLine) >> eol)
     magic <- wadMagic
-    optional eol -- needs to be optional to support "IWAD"
+    eol
     result <- wadInfoLine `sepEndBy` eol
     eof
     return (magic:(filter ((/=) SomethingElse) result))
@@ -72,9 +72,9 @@ pp2 (Right xs) = filter ((/=) SomethingElse) xs
 
 -- good test data
 -- XXX: need to firm these up with comparisons to literal parse trees
-test_0 = (assertRight . parsePatch)  "IWAD"               -- simplest
-test_1 = (assertRight . parsePatch)  "PWAD"
-test_2 = (assertRight . parsePatch)  "#comment\nIWAD"     -- pre-comment
+test_0 = (assertRight . parsePatch)  "IWAD\n"             -- simplest
+test_1 = (assertRight . parsePatch)  "PWAD\n"
+test_2 = (assertRight . parsePatch)  "#comment\nIWAD\n"   -- pre-comment
 test_3 = (assertRight . parsePatch)  "PWAD\n#comment"     -- post-comment
 test_6 = (assertRight . parsePatch)  "IWAD\n"             -- free whitespace
 test_7 = (assertRight . parsePatch)  "IWAD\n\n"
@@ -99,5 +99,6 @@ test_21 = (assertLeft . parsePatch) "label foo"          -- missing magic -- fai
 test_22 = (assertLeft . parsePatch) "label foo\nIWAD"    -- magic not first -- failing
 test_23 = (assertLeft . parsePatch) "PWAD\nlabel 123456789" -- invalid label (>8 length) -- failing
 test_24 = (assertLeft . parsePatch) "    IWAD"
+test_25 = (assertLeft . parsePatch) "IWAD" -- missing newline suffix
 
 main = htfMain htf_thisModulesTests
