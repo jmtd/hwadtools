@@ -13,6 +13,7 @@
 
 import Text.ParserCombinators.Parsec
 import Test.Framework
+import Data.Char (isSpace)
 
 data WadInfoCommand = WadInfoLabel String | SomethingElse
     | IWAD | PWAD
@@ -21,24 +22,23 @@ data WadInfoCommand = WadInfoLabel String | SomethingElse
 -- it would be nice to extend this to support parsing the wadMagic before any other commands 
 -- with comments/whitespace interspersed freely around them
 wadInfoFile = do
-    skipMany (wadInfoComment >> eol)
+    skipMany ((wadInfoComment <|> emptyLine) >> eol)
     magic <- wadMagic
     optional eol -- needs to be optional to support "IWAD"
-    result <- wadInfoLine `sepBy` eol
+    result <- wadInfoLine `sepEndBy` eol
     eof
     return (magic:(filter ((/=) SomethingElse) result))
 
 eol = char '\n'
 
-wadInfoLine = do
-    blah <- wadInfoLabel <|> emptyLine
-    optional (many (char ' ')) --spaces no good, eats newlines
-    optional wadInfoComment
-    return blah
+wadInfoLine = wadInfoLabel <|> wadInfoComment <|> emptyLine
 
 -- can we return nowt instead and do away with emptyLine?
+isSpaceNotNewLine x = (isSpace x) && (x /= '\n')
+
 emptyLine = do
-    spaces
+    skipMany (satisfy isSpaceNotNewLine)
+    lookAhead eol
     return SomethingElse
 
 wadMagic = iwadMagic <|> pwadMagic
@@ -76,8 +76,6 @@ test_0 = (assertRight . parsePatch)  "IWAD"               -- simplest
 test_1 = (assertRight . parsePatch)  "PWAD"
 test_2 = (assertRight . parsePatch)  "#comment\nIWAD"     -- pre-comment
 test_3 = (assertRight . parsePatch)  "PWAD\n#comment"     -- post-comment
-test_4 = (assertRight . parsePatch)  "PWAD#comment"     -- suffixed comment
-test_5 = (assertRight . parsePatch)  "PWAD #comment"
 test_6 = (assertRight . parsePatch)  "IWAD\n"             -- free whitespace
 test_7 = (assertRight . parsePatch)  "IWAD\n\n"
 test_8 = (assertRight . parsePatch)  "\nIWAD\n\n"
@@ -89,6 +87,8 @@ test_13 = (assertRight . parsePatch) "PWAD\nlabel 01234567#" -- valid label (emp
 test_14 = (assertRight . parsePatch) "PWAD\nlabel 01234567# comment" -- valid label (comment suffix)
 
 -- bad test data
+test_4 = (assertLeft . parsePatch)  "PWAD#comment"     -- suffixed comment not supported
+test_5 = (assertLeft . parsePatch)  "PWAD #comment"    -- suffixed whitespace (and comment)
 test_15 = (assertLeft . parsePatch) "IWAD\n# blah\nIWAD" -- too many magics -- failing
 test_16 = (assertLeft . parsePatch) "IWAD\nPWAD"         -- too many magics -- failing
 test_17 = (assertLeft . parsePatch) "JWAD"               -- invalid magic
