@@ -63,6 +63,7 @@ getHandle = do
 -- strip trailing \0 and QP-encode the remaining string
 myEncode :: L.ByteString -> String
 myEncode x = BC.unpack $ encode $ L.toStrict $ myEncode' x
+
 myEncode' :: L.ByteString -> L.ByteString
 myEncode' bs | bs == L.empty = bs
         | head == '\0' = if tail == L.empty
