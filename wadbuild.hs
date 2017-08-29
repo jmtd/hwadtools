@@ -21,22 +21,17 @@ data WadInfoCommand = WadInfoLabel String | SomethingElse
 -- it would be nice to extend this to support parsing the wadMagic before any other commands 
 -- with comments/whitespace interspersed freely around them
 wadInfoFile = do
-    -- magic <- wadMagic
-    spaces -- fixes test_8, breaks test_24
+    skipMany (wadInfoComment >> eol)
+    magic <- wadMagic
+    optional eol -- needs to be optional to support "IWAD"
     result <- wadInfoLine `sepBy` eol
     eof
-    return result
+    return (magic:(filter ((/=) SomethingElse) result))
 
 eol = char '\n'
 
-extendedWadInfoLine x = do
-    xv <- x
-    optional (many (char ' ')) --spaces no good, eats newlines
-    optional wadInfoComment
-    return xv
-
 wadInfoLine = do
-    blah <- wadInfoLabel <|> wadMagic <|> emptyLine
+    blah <- wadInfoLabel <|> emptyLine
     optional (many (char ' ')) --spaces no good, eats newlines
     optional wadInfoComment
     return blah
