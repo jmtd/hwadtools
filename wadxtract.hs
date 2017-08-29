@@ -2,9 +2,12 @@ import System.Environment (getArgs)
 import System.IO
 import System.Directory (createDirectoryIfMissing)
 import qualified Data.ByteString.Lazy as L
-import qualified Data.ByteString.Lazy.Char8 as C -- unpack
+import qualified Data.ByteString.Lazy.Char8 as LC -- unpack
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as BC
 import Data.Binary.Get
 import System.FilePath --(</>)
+import Codec.Binary.QuotedPrintable (encode)
 
 import Wad
 
@@ -56,9 +59,27 @@ getHandle = do
   overlapping offsets and a resource is changed later... can we handle that situation?
   so we just need rawname (since we want reproducibility) and offset, it seems.
 -}
--- XXX this is bad, unpack will fuck up non-ascii chars I think?
+
+-- strip trailing \0 and QP-encode the remaining string
+myEncode :: L.ByteString -> String
+myEncode x = BC.unpack $ encode $ L.toStrict $ myEncode' x
+myEncode' :: L.ByteString -> L.ByteString
+myEncode' bs | bs == L.empty = bs
+        | head == '\0' = if tail == L.empty
+                         then L.empty
+                         else head `LC.cons` tail
+        | otherwise = head `LC.cons` tail
+    where
+        head = LC.head bs
+        tail = myEncode' $ L.tail bs
+
 wadInfoEntry :: DirEnt -> String
-wadInfoEntry (offs,size,rawname) = (C.unpack rawname) ++ "," ++ (show offs)
+wadInfoEntry (offs,size,rawname) =
+    if 0 == size
+        then "label " ++ encname
+        else encname ++ "," ++ (show offs)
+    where
+        encname = myEncode rawname
 
 writewadInfo dirents outdir =
     writeFile (outdir </> "wadinfo.txt") (unlines (map wadInfoEntry dirents))
@@ -67,9 +88,14 @@ writewadInfo dirents outdir =
 -- XXX another problem: lump names could clash, we need to distinguish them somehow
 -- XXX another problem: we need to recognise MAP markers and bundle such lumps together
 writeLump :: L.ByteString -> FilePath -> DirEnt -> IO ()
-writeLump input outdir (offs',size',rawname) = do
-    L.writeFile fn lump where
-        fn = outdir </> (C.unpack rawname)
+writeLump input outdir (offs',size',rawname) =
+    if size == 0
+    then -- label; skip
+        return ()
+    else
+        L.writeFile fn lump
+    where
+        fn = outdir </> (LC.unpack rawname)
         lump = L.take size (L.drop offs input)
         size = fromIntegral size'
         offs = fromIntegral offs'
