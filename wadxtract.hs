@@ -80,8 +80,30 @@ wadInfoEntry (offs,size,rawname) =
     where
         encname = myEncode rawname
 
-writewadInfo dirents outdir =
-    writeFile (outdir </> "wadinfo.txt") (unlines (map wadInfoEntry dirents))
+writewadInfo dirents outdir = do
+    fh <- openFile (outdir </> "wadinfo.txt") WriteMode
+    writewadInfo' fh headerSize dirents -- initial offset past the header
+    hClose fh
+
+-- XXX: need to iterate over (map...) below, keeping an eye on the offsets as
+-- we go to detect holes and record them accordingly
+writewadInfo' _ _ [] = return ()
+writewadInfo' fh fpos ((offs,size,name):ents) = do
+    possiblePadding fh fpos offs
+    hPutStrLn fh $ wadInfoEntry (offs,size,name)
+    writewadInfo' fh (fpos + size) ents
+
+-- detect and report on wad holes
+-- XXX: situation where offs < fpos (corrupt/invalid/wtf?)
+-- erm nope, no guarantee that the directory is ordered by offset. We need a sparse
+-- map or something and pass that around instead of an offset.
+possiblePadding fh fpos offs = do
+    if offs == fpos
+    then return ()
+    else 
+    where
+        delta = offs - fpos
+
 
 -- XXX problem: rawname is being truncated at the first \0 here so we need a mapping fn instead
 --      in isolation, we could use QP encoding for the filename
