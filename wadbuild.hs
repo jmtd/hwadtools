@@ -72,35 +72,34 @@ parsePatch x = parse wadInfoFile "" x
 
 -- good test data
 -- XXX: need to firm these up with comparisons to literal parse trees
-test_25 = (assertRight . parsePatch) "IWAD"               -- simple
-test_0 = (assertRight . parsePatch)  "IWAD\n"             -- still simple
-test_1 = (assertRight . parsePatch)  "PWAD\n"
-test_2 = (assertRight . parsePatch)  "#comment\nIWAD\n"   -- pre-comment
-test_3 = (assertRight . parsePatch)  "PWAD\n#comment"     -- post-comment
-test_6 = (assertRight . parsePatch)  "IWAD\n"             -- free whitespace
-test_7 = (assertRight . parsePatch)  "IWAD\n\n"
-test_8 = (assertRight . parsePatch)  "\nIWAD\n\n"
-test_9 = (assertRight . parsePatch)  "PWAD\nlabel MAP01"  -- valid label (<8 length)
-test_10 = (assertRight . parsePatch) "PWAD\nlabel MAP01\nlabel MAP01"  -- valid labels (duplicated)
-test_11 = (assertRight . parsePatch) "PWAD\njunk 01234567" -- junk
+test_wad_marker_only     = (assertRight . parsePatch) "IWAD"
+test_wad_marker_newline  = (assertRight . parsePatch) "IWAD\n"
+test_pwad_marker_newline = (assertRight . parsePatch) "PWAD\n"
+test_pre_marker_comment  = (assertRight . parsePatch) "#comment\nIWAD\n"
+test_post_marker_comment = (assertRight . parsePatch) "PWAD\n#comment"
+test_multi_empty_lines   = (assertRight . parsePatch) "IWAD\n\n"
+test_pre_post_empty_line = (assertRight . parsePatch) "\nIWAD\n\n"
+test_simple_label        = (assertRight . parsePatch) "PWAD\nlabel MAP01"
+test_duplicate_labels    = (assertRight . parsePatch) "PWAD\nlabel A\nlabel A"
+test_junk                = (assertRight . parsePatch) "PWAD\njunk 01234567"
 
 -- bad test data
-test_4 = (assertLeft . parsePatch)  "PWAD#comment"     -- suffixed comment not supported
-test_5 = (assertLeft . parsePatch)  "PWAD #comment"    -- suffixed whitespace (and comment)
-test_15 = (assertLeft . parsePatch) "IWAD\n# blah\nIWAD" -- too many magics
-test_16 = (assertLeft . parsePatch) "IWAD\nPWAD"         -- too many magics
-test_17 = (assertLeft . parsePatch) "JWAD"               -- invalid magic
-test_18 = (assertLeft . parsePatch) ""                   -- missing commands
-test_19 = (assertLeft . parsePatch) "\n"
-test_20 = (assertLeft . parsePatch) "# nothing here"
-test_21 = (assertLeft . parsePatch) "label foo"          -- missing magic
-test_22 = (assertLeft . parsePatch) "label foo\nIWAD"    -- magic not first
-test_24 = (assertLeft . parsePatch) "    IWAD"
-test_14 = (assertLeft . parsePatch) "PWAD\nlabel 01234567# comment" -- comment suffixes not supported
-test_12 = (assertLeft . parsePatch) "PWAD\nlabel 01234567 " -- whitespace suffix not supported
-test_26 = (assertLeft . parsePatch) "PWAD\nlabel"
-test_27 = (assertLeft . parsePatch) "PWAD\nlabel "
-test_28 = (assertLeft . parsePatch) "PWAD\njunk"
-test_29 = (assertLeft . parsePatch) "PWAD\njunk "
+test_suffixed_comment        = (assertLeft . parsePatch)  "PWAD#comment"
+test_suffixed_whitespace     = (assertLeft . parsePatch)  "PWAD #comment"
+test_too_many_magics_comment = (assertLeft . parsePatch) "IWAD\n# blah\nIWAD"
+test_too_many_magics         = (assertLeft . parsePatch) "IWAD\nPWAD"
+test_invalid_magic           = (assertLeft . parsePatch) "JWAD"
+test_empty                   = (assertLeft . parsePatch) ""
+test_newline_only            = (assertLeft . parsePatch) "\n"
+test_comment_only            = (assertLeft . parsePatch) "# nothing here"
+test_label_only              = (assertLeft . parsePatch) "label foo"
+test_label_before_magic      = (assertLeft . parsePatch) "label foo\nIWAD"
+test_space_before_magic      = (assertLeft . parsePatch) "    IWAD"
+test_label_comment_suffix    = (assertLeft . parsePatch) "PWAD\nlabel 01234567# comment"
+test_label_whitespace_suffix = (assertLeft . parsePatch) "PWAD\nlabel 01234567 "
+test_empty_label             = (assertLeft . parsePatch) "PWAD\nlabel"
+test_empty_label_space       = (assertLeft . parsePatch) "PWAD\nlabel "
+test_empty_junk              = (assertLeft . parsePatch) "PWAD\njunk"
+test_empty_junk_space        = (assertLeft . parsePatch) "PWAD\njunk "
 
 main = htfMain htf_thisModulesTests
