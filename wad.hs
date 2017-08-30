@@ -2,7 +2,6 @@ module Wad ( getWadDirectory
            , parseDirectory
            , DirEnt
            , WadHeader
-           , headerSize
            ) where
 
 import qualified Data.ByteString.Lazy as L
@@ -12,7 +11,6 @@ import Data.Int (Int32)
 
 type WadHeader = (L.ByteString, Int32, Int32)
 type DirEnt = (Int32, Int32, L.ByteString)
-headerSize = 12 -- 4 magic, 4 numents, 4 diroffs
 direntSize = 16 -- 4 filepos, 4 size, 8 name
 
 deserialiseHeader :: Get WadHeader
