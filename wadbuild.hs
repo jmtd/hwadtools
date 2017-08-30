@@ -53,15 +53,17 @@ wadInfoComment = do
     many (noneOf "\n")
     return SomethingElse -- for type checking, but we want to ignore these really
 
+qpEncChar = satisfy $ (flip elem) ['!'..'~']
+
 wadInfoLabel = do
     string "label "
-    label <- many1 $ satisfy $ (flip elem) ['!'..'~']
+    label <- many1 qpEncChar
     return $ WadInfoLabel label
 
 -- inline junk, QP-encoded.
 wadInfoJunk = do
     string "junk "
-    junk <- many1 $ satisfy $ (flip elem) ['!'..'~']
+    junk <- many1 qpEncChar
     return $ WadInfoJunk junk
 
 ------------------------------------------------------------------------------
