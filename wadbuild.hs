@@ -15,7 +15,7 @@ import Text.ParserCombinators.Parsec
 import Test.Framework
 import Data.Char (isSpace)
 
-data WadInfoCommand = WadInfoLabel String | SomethingElse
+data WadInfoCommand = WadInfoLabel String | WadInfoJunk String | SomethingElse
     | IWAD | PWAD
     deriving (Show,Eq)
 
@@ -33,7 +33,7 @@ wadInfoBody = do
     newline -- after the header
     wadInfoLine `sepEndBy` newline
 
-wadInfoLine = wadInfoLabel <|> wadInfoComment <|> emptyLine
+wadInfoLine = wadInfoLabel <|> wadInfoComment <|> wadInfoJunk <|> emptyLine
 
 -- can we return nowt instead and do away with emptyLine?
 isSpaceNotNewLine x = (isSpace x) && (x /= '\n')
@@ -58,6 +58,12 @@ wadInfoLabel = do
     label <- many1 $ satisfy $ (flip elem) ['!'..'~']
     return $ WadInfoLabel label
 
+-- inline junk, QP-encoded.
+wadInfoJunk = do
+    string "junk "
+    junk <- many1 $ satisfy $ (flip elem) ['!'..'~']
+    return $ WadInfoJunk junk
+
 ------------------------------------------------------------------------------
 -- test data
 
@@ -76,7 +82,7 @@ test_7 = (assertRight . parsePatch)  "IWAD\n\n"
 test_8 = (assertRight . parsePatch)  "\nIWAD\n\n"
 test_9 = (assertRight . parsePatch)  "PWAD\nlabel MAP01"  -- valid label (<8 length)
 test_10 = (assertRight . parsePatch) "PWAD\nlabel MAP01\nlabel MAP01"  -- valid labels (duplicated)
-test_11 = (assertRight . parsePatch) "PWAD\nlabel 01234567" -- valid label (==8 length)
+test_11 = (assertRight . parsePatch) "PWAD\njunk 01234567" -- junk
 
 -- bad test data
 test_4 = (assertLeft . parsePatch)  "PWAD#comment"     -- suffixed comment not supported
@@ -92,5 +98,9 @@ test_22 = (assertLeft . parsePatch) "label foo\nIWAD"    -- magic not first
 test_24 = (assertLeft . parsePatch) "    IWAD"
 test_14 = (assertLeft . parsePatch) "PWAD\nlabel 01234567# comment" -- comment suffixes not supported
 test_12 = (assertLeft . parsePatch) "PWAD\nlabel 01234567 " -- whitespace suffix not supported
+test_26 = (assertLeft . parsePatch) "PWAD\nlabel"
+test_27 = (assertLeft . parsePatch) "PWAD\nlabel "
+test_28 = (assertLeft . parsePatch) "PWAD\njunk"
+test_29 = (assertLeft . parsePatch) "PWAD\njunk "
 
 main = htfMain htf_thisModulesTests
