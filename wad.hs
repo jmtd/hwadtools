@@ -37,6 +37,6 @@ parseDirEnt = do
 parseDirectory :: Int32 -> Get [DirEnt]
 parseDirectory 0 = return []
 parseDirectory n = do
-    head <- parseDirEnt
-    tail <- parseDirectory (n - 1)
-    return (head : tail)
+  head <- parseDirEnt
+  tail <- parseDirectory (n - 1)
+  return (head : tail)
