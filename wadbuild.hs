@@ -66,10 +66,6 @@ wadInfoLabel = do
 parsePatch :: String -> Either ParseError [WadInfoCommand]
 parsePatch x = parse wadInfoFile "" x
 
-pp2 :: Either ParseError [WadInfoCommand] -> [WadInfoCommand]
-pp2 (Left _) = error "uh oh"
-pp2 (Right xs) = filter ((/=) SomethingElse) xs
-
 -- good test data
 -- XXX: need to firm these up with comparisons to literal parse trees
 test_0 = (assertRight . parsePatch)  "IWAD\n"             -- simplest
