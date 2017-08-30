@@ -56,14 +56,13 @@ pwadMagic = do
 wadInfoComment = do
     char '#'
     many (noneOf "\n")
-    --many1 anyChar -- seems we still need to avoid eating a \n here
     return SomethingElse -- for type checking, but we want to ignore these really
 
 wadInfoLabel = do
     string "label "
-    label <- many1 (noneOf "\n")
+    label <- many1 $ satisfy $ (flip elem) ['!'..'~']
     return $ WadInfoLabel label
-    -- error out if >8?
+
 
 parsePatch :: String -> Either ParseError [WadInfoCommand]
 parsePatch x = parse wadInfoFile "" x
@@ -81,7 +80,6 @@ test_8 = (assertRight . parsePatch)  "\nIWAD\n\n"
 test_9 = (assertRight . parsePatch)  "PWAD\nlabel MAP01"  -- valid label (<8 length)
 test_10 = (assertRight . parsePatch) "PWAD\nlabel MAP01\nlabel MAP01"  -- valid labels (duplicated)
 test_11 = (assertRight . parsePatch) "PWAD\nlabel 01234567" -- valid label (==8 length)
-test_12 = (assertRight . parsePatch) "PWAD\nlabel 01234567 " -- valid label (whitespace suffix)
 
 -- bad test data
 test_4 = (assertLeft . parsePatch)  "PWAD#comment"     -- suffixed comment not supported
@@ -96,6 +94,7 @@ test_21 = (assertLeft . parsePatch) "label foo"          -- missing magic
 test_22 = (assertLeft . parsePatch) "label foo\nIWAD"    -- magic not first
 test_24 = (assertLeft . parsePatch) "    IWAD"
 test_14 = (assertLeft . parsePatch) "PWAD\nlabel 01234567# comment" -- comment suffixes not supported
+test_12 = (assertLeft . parsePatch) "PWAD\nlabel 01234567 " -- whitespace suffix not supported
 
 -- XXX: write QP tests for label values
 
