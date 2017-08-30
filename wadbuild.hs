@@ -23,10 +23,10 @@ wadInfoFile = do
     magic  <- wadInfoHeader
     result <- option [] wadInfoBody
     eof
-    return (magic:(filter ((/=) SomethingElse) result))
+    return $ magic:(filter ((/=) SomethingElse) result)
 
 wadInfoHeader = do
-    skipMany ((wadInfoComment <|> emptyLine) >> newline)
+    skipMany $ (wadInfoComment <|> emptyLine) >> newline
     wadMagic
 
 wadInfoBody = do
@@ -45,13 +45,8 @@ emptyLine = do
 
 wadMagic = iwadMagic <|> pwadMagic
 
-iwadMagic = do
-    string "IWAD"
-    return IWAD
-
-pwadMagic = do
-    string "PWAD"
-    return PWAD
+iwadMagic = string "IWAD" >> return IWAD
+pwadMagic = string "PWAD" >> return PWAD
 
 wadInfoComment = do
     char '#'
@@ -63,6 +58,8 @@ wadInfoLabel = do
     label <- many1 $ satisfy $ (flip elem) ['!'..'~']
     return $ WadInfoLabel label
 
+------------------------------------------------------------------------------
+-- test data
 
 parsePatch :: String -> Either ParseError [WadInfoCommand]
 parsePatch x = parse wadInfoFile "" x
@@ -95,7 +92,5 @@ test_22 = (assertLeft . parsePatch) "label foo\nIWAD"    -- magic not first
 test_24 = (assertLeft . parsePatch) "    IWAD"
 test_14 = (assertLeft . parsePatch) "PWAD\nlabel 01234567# comment" -- comment suffixes not supported
 test_12 = (assertLeft . parsePatch) "PWAD\nlabel 01234567 " -- whitespace suffix not supported
-
--- XXX: write QP tests for label values
 
 main = htfMain htf_thisModulesTests
