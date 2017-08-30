@@ -15,8 +15,15 @@ import Text.ParserCombinators.Parsec
 import Test.Framework
 import Data.Char (isSpace)
 
-data WadInfoCommand = WadInfoLabel String | WadInfoJunk String | SomethingElse
-    | IWAD | PWAD
+data WadInfoCommand = IWAD | PWAD          -- WAD magic markers
+                    | WadInfoLabel String  -- empty directory entry e.g. MAP01
+                    | WadInfoJunk String   -- inline junk (space between data)
+                    | WadInfoLump String   -- a lump
+                    | WadInfoDirectory     -- where the directory goes
+                    | WadInfoSkip Int      -- a skip instruction. Must be filled in later
+                    | WadInfoExtWad String -- an external sub-wad
+                    | WadInfoExtJunk String-- external junk (too big to inline)
+                    | SomethingElse        -- Ignore.
     deriving (Show,Eq)
 
 wadInfoFile = do
