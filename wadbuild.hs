@@ -71,17 +71,16 @@ parsePatch :: String -> Either ParseError [WadInfoCommand]
 parsePatch x = parse wadInfoFile "" x
 
 -- good test data
--- XXX: need to firm these up with comparisons to literal parse trees
-test_wad_marker_only     = (assertRight . parsePatch) "IWAD"
-test_wad_marker_newline  = (assertRight . parsePatch) "IWAD\n"
-test_pwad_marker_newline = (assertRight . parsePatch) "PWAD\n"
-test_pre_marker_comment  = (assertRight . parsePatch) "#comment\nIWAD\n"
-test_post_marker_comment = (assertRight . parsePatch) "PWAD\n#comment"
-test_multi_empty_lines   = (assertRight . parsePatch) "IWAD\n\n"
-test_pre_post_empty_line = (assertRight . parsePatch) "\nIWAD\n\n"
-test_simple_label        = (assertRight . parsePatch) "PWAD\nlabel MAP01"
-test_duplicate_labels    = (assertRight . parsePatch) "PWAD\nlabel A\nlabel A"
-test_junk                = (assertRight . parsePatch) "PWAD\njunk 01234567"
+test_wad_marker_only     = (assertEqual . parsePatch) "IWAD"                   $ Right [IWAD]
+test_wad_marker_newline  = (assertEqual . parsePatch) "IWAD\n"                 $ Right [IWAD]
+test_pwad_marker_newline = (assertEqual . parsePatch) "PWAD\n"                 $ Right [PWAD]
+test_pre_marker_comment  = (assertEqual . parsePatch) "#comment\nIWAD\n"       $ Right [IWAD]
+test_post_marker_comment = (assertEqual . parsePatch) "PWAD\n#comment"         $ Right [PWAD]
+test_multi_empty_lines   = (assertEqual . parsePatch) "IWAD\n\n"               $ Right [IWAD]
+test_pre_post_empty_line = (assertEqual . parsePatch) "\nIWAD\n\n"             $ Right [IWAD]
+test_simple_label        = (assertEqual . parsePatch) "PWAD\nlabel MAP01"      $ Right [PWAD, WadInfoLabel "MAP01"]
+test_duplicate_labels    = (assertEqual . parsePatch) "PWAD\nlabel A\nlabel A" $ Right [PWAD, WadInfoLabel "A", WadInfoLabel "A"]
+test_junk                = (assertEqual . parsePatch) "PWAD\njunk 01234567"    $ Right [PWAD, WadInfoJunk "01234567"]
 
 -- bad test data
 test_suffixed_comment        = (assertLeft . parsePatch)  "PWAD#comment"
