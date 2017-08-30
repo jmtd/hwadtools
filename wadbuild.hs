@@ -26,14 +26,12 @@ wadInfoFile = do
     return (magic:(filter ((/=) SomethingElse) result))
 
 wadInfoHeader = do
-    skipMany ((wadInfoComment <|> emptyLine) >> eol)
+    skipMany ((wadInfoComment <|> emptyLine) >> newline)
     wadMagic
 
 wadInfoBody = do
-    eol -- after the header
-    wadInfoLine `sepEndBy` eol
-
-eol = char '\n'
+    newline -- after the header
+    wadInfoLine `sepEndBy` newline
 
 wadInfoLine = wadInfoLabel <|> wadInfoComment <|> emptyLine
 
@@ -42,7 +40,7 @@ isSpaceNotNewLine x = (isSpace x) && (x /= '\n')
 
 emptyLine = do
     skipMany (satisfy isSpaceNotNewLine)
-    lookAhead eol
+    lookAhead newline
     return SomethingElse
 
 wadMagic = iwadMagic <|> pwadMagic
