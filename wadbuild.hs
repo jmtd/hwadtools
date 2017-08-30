@@ -95,7 +95,7 @@ test_20 = (assertLeft . parsePatch) "# nothing here"
 test_21 = (assertLeft . parsePatch) "label foo"          -- missing magic
 test_22 = (assertLeft . parsePatch) "label foo\nIWAD"    -- magic not first
 test_24 = (assertLeft . parsePatch) "    IWAD"
-test_14 = (assertLeft . parsePatch) "PWAD\nlabel 01234567# comment" -- comment suffixwes not supported
+test_14 = (assertLeft . parsePatch) "PWAD\nlabel 01234567# comment" -- comment suffixes not supported
 
 -- XXX: write QP tests for label values
 
