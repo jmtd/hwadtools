@@ -66,10 +66,8 @@ myEncode x = BC.unpack $ encode $ L.toStrict $ myEncode' x
 
 myEncode' :: L.ByteString -> L.ByteString
 myEncode' bs | bs == L.empty = bs
-        | head == '\0' = if tail == L.empty
-                         then L.empty
-                         else head `LC.cons` tail
-        | otherwise = head `LC.cons` tail
+             | head == '\0' && tail == L.empty = L.empty
+             | otherwise = head `LC.cons` tail
     where
         head = LC.head bs
         tail = myEncode' $ L.tail bs
@@ -86,8 +84,11 @@ writewadInfo dirents outdir =
     writeFile (outdir </> "wadinfo.txt") (unlines (map wadInfoEntry dirents))
 
 -- XXX problem: rawname is being truncated at the first \0 here so we need a mapping fn instead
+--      in isolation, we could use QP encoding for the filename
 -- XXX another problem: lump names could clash, we need to distinguish them somehow
+--      this is the harder problem
 -- XXX another problem: we need to recognise MAP markers and bundle such lumps together
+--      oh wait maybe this is the hard one
 writeLump :: L.ByteString -> FilePath -> DirEnt -> IO ()
 writeLump input outdir (offs',size',rawname) =
     if size == 0
