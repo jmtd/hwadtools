@@ -1,5 +1,6 @@
 module Wad ( getWadDirectory
            , parseDirectory
+           , deserialiseHeader
            , DirEnt
            , WadHeader
            ) where

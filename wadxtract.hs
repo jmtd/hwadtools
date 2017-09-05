@@ -84,6 +84,13 @@ wadInfoEntry (offs,size,rawname) =
 
 writewadInfo wad dirents outdir = do
     fh <- openFile (outdir </> "wadinfo.txt") WriteMode
+
+    let (magic,_,_) = runGet deserialiseHeader wad
+    case (LC.unpack magic) of
+        "IWAD" -> hPutStr fh "IWAD\n"
+        "PWAD" -> hPutStr fh "PWAD\n"
+        _ -> return () -- XXX: invalid magic
+
     hPutStr fh $ unlines $ map wadInfoEntry dirents
     possibleJunkEntries wad fh dirents
     hClose fh
