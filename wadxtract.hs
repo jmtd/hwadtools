@@ -6,8 +6,10 @@ import qualified Data.ByteString.Lazy.Char8 as LC -- unpack
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import Data.Binary.Get
+import Data.List (sortBy)
 import System.FilePath --(</>)
 import Codec.Binary.QuotedPrintable (encode)
+import Data.Int (Int32)
 
 import Wad
 
@@ -80,8 +82,29 @@ wadInfoEntry (offs,size,rawname) =
     where
         encname = myEncode rawname
 
-writewadInfo dirents outdir =
-    writeFile (outdir </> "wadinfo.txt") (unlines (map wadInfoEntry dirents))
+writewadInfo wad dirents outdir = do
+    fh <- openFile (outdir </> "wadinfo.txt") WriteMode
+    hPutStr fh $ unlines $ map wadInfoEntry dirents
+    possibleJunkEntries wad fh dirents
+    hClose fh
+
+-- XXX: sort the dirents by offset to do a recursive walk for holes
+possibleJunkEntries :: L.ByteString -> Handle -> [DirEnt] -> IO ()
+possibleJunkEntries wad fh dirents = do
+    possibleJunkEntries' wad fh 12 (sortBy sortfn dirents) where
+        sortfn (x,_,_) (y,_,_) = compare x y
+
+possibleJunkEntries' :: L.ByteString -> Handle -> Int32 -> [DirEnt] -> IO ()
+possibleJunkEntries' _ _ _ [] = return ()
+possibleJunkEntries' wad fh fpos ((offs,size,name):ds) = do
+    if   fpos /= offs
+    then hPutStr fh $ "junk " ++ (show fpos) ++ " " ++ (BC.unpack enc) ++ "\n"
+    else return ()
+    possibleJunkEntries' wad fh (offs+size) ds
+    where
+        hole = offs - fpos -- XXX possibly negative?
+        junk = L.take (fromIntegral hole) (L.drop (fromIntegral fpos) wad) -- fromIntegral hole -> Int32 -> Int64
+        enc  = encode $ L.toStrict $ junk -- type: B.ByteString
 
 -- XXX problem: rawname is being truncated at the first \0 here so we need a mapping fn instead
 --      in isolation, we could use QP encoding for the filename
@@ -109,7 +132,7 @@ extractWad handle outdir = do
     input  <- L.hGetContents handle
     let (numents,waddir) = runGet getWadDirectory input
     let dirents = runGet (parseDirectory numents) waddir
-    writewadInfo dirents outdir
+    writewadInfo input dirents outdir
     writeLumps input outdir dirents
 
 main = do
