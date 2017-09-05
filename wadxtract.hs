@@ -78,7 +78,7 @@ wadInfoEntry :: DirEnt -> String
 wadInfoEntry (offs,size,rawname) =
     if 0 == size
         then "label " ++ encname
-        else encname ++ "," ++ (show offs)
+        else "lump " ++ encname ++ " " ++ (show offs) ++ " " ++ "path/to/lump/XXX"
     where
         encname = myEncode rawname
 
