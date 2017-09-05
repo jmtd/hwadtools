@@ -15,16 +15,19 @@ import Text.ParserCombinators.Parsec
 import Test.Framework
 import Data.Char (isSpace)
 
-data WadInfoCommand = IWAD | PWAD          -- WAD magic markers
-                    | WadInfoLabel String  -- empty directory entry e.g. MAP01
-                    | WadInfoJunk String   -- inline junk (space between data)
-                    | WadInfoLump String   -- a lump
-                    | WadInfoDirectory     -- where the directory goes
-                    | WadInfoSkip Int      -- a skip instruction. Must be filled in later
-                    | WadInfoExtWad String -- an external sub-wad
-                    | WadInfoExtJunk String-- external junk (too big to inline)
-                    | SomethingElse        -- Ignore.
+data WadInfoCommand = IWAD | PWAD            -- WAD magic markers
+                    | WadInfoLabel String    -- empty directory entry e.g. MAP01
+                    | WadInfoJunk Int String -- inline junk (space between data)
+                    | WadInfoLump String Int String -- a lump: name, offset, path
+                    | WadInfoDirectory       -- where the directory goes
+                    | WadInfoSkip Int        -- a skip instruction. Must be filled in later
+                    | WadInfoExtWad String   -- an external sub-wad
+                    | WadInfoExtJunk String  -- external junk (too big to inline)
+                    | SomethingElse          -- Ignore.
     deriving (Show,Eq)
+
+------------------------------------------------------------------------------
+-- parsing functions (building [WadInfoCommand] data structures)
 
 wadInfoFile = do
     magic  <- wadInfoHeader
@@ -40,7 +43,7 @@ wadInfoBody = do
     newline -- after the header
     wadInfoLine `sepEndBy` newline
 
-wadInfoLine = wadInfoLabel <|> wadInfoComment <|> wadInfoJunk <|> emptyLine
+wadInfoLine = try wadInfoLabel <|> wadInfoComment <|> wadInfoJunk <|> wadInfoLump <|> emptyLine
 
 -- can we return nowt instead and do away with emptyLine?
 isSpaceNotNewLine x = (isSpace x) && (x /= '\n')
@@ -70,8 +73,19 @@ wadInfoLabel = do
 -- inline junk, QP-encoded.
 wadInfoJunk = do
     string "junk "
+    offs <- many1 digit
+    spaces
     junk <- many1 qpEncChar
-    return $ WadInfoJunk junk
+    return $ WadInfoJunk (read offs) junk
+
+wadInfoLump = do
+    string "lump "
+    name <- many1 qpEncChar
+    spaces
+    offs <- many1 digit
+    spaces
+    path <- many1 (noneOf "\n")
+    return $ WadInfoLump name (read offs) path
 
 ------------------------------------------------------------------------------
 -- test data
@@ -89,7 +103,8 @@ test_multi_empty_lines   = (assertEqual . parsePatch) "IWAD\n\n"               $
 test_pre_post_empty_line = (assertEqual . parsePatch) "\nIWAD\n\n"             $ Right [IWAD]
 test_simple_label        = (assertEqual . parsePatch) "PWAD\nlabel MAP01"      $ Right [PWAD, WadInfoLabel "MAP01"]
 test_duplicate_labels    = (assertEqual . parsePatch) "PWAD\nlabel A\nlabel A" $ Right [PWAD, WadInfoLabel "A", WadInfoLabel "A"]
-test_junk                = (assertEqual . parsePatch) "PWAD\njunk 01234567"    $ Right [PWAD, WadInfoJunk "01234567"]
+test_junk                = (assertEqual . parsePatch) "PWAD\njunk 1234 012367" $ Right [PWAD, WadInfoJunk 1234 "012367"]
+test_lump                = (assertEqual . parsePatch) "PWAD\nlump THINGS 12 some/path" $ Right [PWAD, WadInfoLump "THINGS" 12 "some/path"]
 
 -- bad test data
 test_suffixed_comment        = (assertLeft . parsePatch)  "PWAD#comment"
@@ -109,5 +124,6 @@ test_empty_label             = (assertLeft . parsePatch) "PWAD\nlabel"
 test_empty_label_space       = (assertLeft . parsePatch) "PWAD\nlabel "
 test_empty_junk              = (assertLeft . parsePatch) "PWAD\njunk"
 test_empty_junk_space        = (assertLeft . parsePatch) "PWAD\njunk "
+test_missing_junk_offset     = (assertLeft . parsePatch) "PWAD\njunk 1234"
 
 main = htfMain htf_thisModulesTests
