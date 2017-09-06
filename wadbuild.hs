@@ -15,8 +15,13 @@ import Text.ParserCombinators.Parsec
 import Test.Framework
 import Data.Char (isSpace)
 
-data WadInfoCommand = IWAD | PWAD            -- WAD magic markers
-                    | WadInfoLabel String    -- empty directory entry e.g. MAP01
+data Wad = Wad { magic   :: WadMagic
+               , entries :: [WadInfoCommand]
+               } deriving (Show,Eq)
+
+data WadMagic = IWAD | PWAD deriving (Show,Eq)
+
+data WadInfoCommand = WadInfoLabel String    -- empty directory entry e.g. MAP01
                     | WadInfoJunk Int String -- inline junk (space between data)
                     | WadInfoLump String Int String -- a lump: name, offset, path
                     | WadInfoDirectory       -- where the directory goes
@@ -33,7 +38,7 @@ wadInfoFile = do
     magic  <- wadInfoHeader
     result <- option [] wadInfoBody
     eof
-    return $ magic:(filter ((/=) SomethingElse) result)
+    return $ Wad magic (filter ((/=) SomethingElse) result)
 
 wadInfoHeader = do
     skipMany $ (wadInfoComment <|> emptyLine) >> newline
@@ -91,21 +96,21 @@ wadInfoLump = do
 ------------------------------------------------------------------------------
 -- test data
 
-parsePatch :: String -> Either ParseError [WadInfoCommand]
+parsePatch :: String -> Either ParseError Wad
 parsePatch x = parse wadInfoFile "" x
 
 -- good test data
-test_wad_marker_only     = (assertEqual . parsePatch) "IWAD"                   $ Right [IWAD]
-test_wad_marker_newline  = (assertEqual . parsePatch) "IWAD\n"                 $ Right [IWAD]
-test_pwad_marker_newline = (assertEqual . parsePatch) "PWAD\n"                 $ Right [PWAD]
-test_pre_marker_comment  = (assertEqual . parsePatch) "#comment\nIWAD\n"       $ Right [IWAD]
-test_post_marker_comment = (assertEqual . parsePatch) "PWAD\n#comment"         $ Right [PWAD]
-test_multi_empty_lines   = (assertEqual . parsePatch) "IWAD\n\n"               $ Right [IWAD]
-test_pre_post_empty_line = (assertEqual . parsePatch) "\nIWAD\n\n"             $ Right [IWAD]
-test_simple_label        = (assertEqual . parsePatch) "PWAD\nlabel MAP01"      $ Right [PWAD, WadInfoLabel "MAP01"]
-test_duplicate_labels    = (assertEqual . parsePatch) "PWAD\nlabel A\nlabel A" $ Right [PWAD, WadInfoLabel "A", WadInfoLabel "A"]
-test_junk                = (assertEqual . parsePatch) "PWAD\njunk 1234 012367" $ Right [PWAD, WadInfoJunk 1234 "012367"]
-test_lump                = (assertEqual . parsePatch) "PWAD\nlump THINGS 12 some/path" $ Right [PWAD, WadInfoLump "THINGS" 12 "some/path"]
+test_wad_marker_only     = (assertEqual . parsePatch) "IWAD"                   $ Right $ Wad IWAD []
+test_wad_marker_newline  = (assertEqual . parsePatch) "IWAD\n"                 $ Right $ Wad IWAD []
+test_pwad_marker_newline = (assertEqual . parsePatch) "PWAD\n"                 $ Right $ Wad PWAD []
+test_pre_marker_comment  = (assertEqual . parsePatch) "#comment\nIWAD\n"       $ Right $ Wad IWAD []
+test_post_marker_comment = (assertEqual . parsePatch) "PWAD\n#comment"         $ Right $ Wad PWAD []
+test_multi_empty_lines   = (assertEqual . parsePatch) "IWAD\n\n"               $ Right $ Wad IWAD []
+test_pre_post_empty_line = (assertEqual . parsePatch) "\nIWAD\n\n"             $ Right $ Wad IWAD []
+test_simple_label        = (assertEqual . parsePatch) "PWAD\nlabel MAP01"      $ Right $ Wad PWAD [WadInfoLabel "MAP01"]
+test_duplicate_labels    = (assertEqual . parsePatch) "PWAD\nlabel A\nlabel A" $ Right $ Wad PWAD [WadInfoLabel "A", WadInfoLabel "A"]
+test_junk                = (assertEqual . parsePatch) "PWAD\njunk 1234 012367" $ Right $ Wad PWAD [WadInfoJunk 1234 "012367"]
+test_lump                = (assertEqual . parsePatch) "PWAD\nlump THINGS 12 some/path" $ Right $ Wad PWAD [WadInfoLump "THINGS" 12 "some/path"]
 
 -- bad test data
 test_suffixed_comment        = (assertLeft . parsePatch)  "PWAD#comment"
