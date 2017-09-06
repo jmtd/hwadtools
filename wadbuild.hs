@@ -63,6 +63,7 @@ wadInfoComment = do
     many (noneOf "\n")
     return SomethingElse -- for type checking, but we want to ignore these really
 
+-- XXX bug here. ' ' is not in this set, but QuotedPrintable won't encode it
 qpEncChar = satisfy $ (flip elem) ['!'..'~']
 
 wadInfoLabel = do
