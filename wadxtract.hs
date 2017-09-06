@@ -105,13 +105,13 @@ possibleJunkEntries' :: L.ByteString -> Handle -> Int32 -> [DirEnt] -> IO ()
 possibleJunkEntries' _ _ _ [] = return ()
 possibleJunkEntries' wad fh fpos ((offs,size,name):ds) = do
     if   fpos /= offs
-    then hPutStr fh $ "junk " ++ (show fpos) ++ " " ++ (BC.unpack enc) ++ "\n"
+    then hPutStr fh $ "junk " ++ (show fpos) ++ " " ++ enc ++ "\n"
     else return ()
     possibleJunkEntries' wad fh (offs+size) ds
     where
         hole = offs - fpos -- XXX possibly negative?
         junk = L.take (fromIntegral hole) (L.drop (fromIntegral fpos) wad) -- fromIntegral hole -> Int32 -> Int64
-        enc  = encode $ L.toStrict $ junk -- type: B.ByteString
+        enc  = BC.unpack $ encode $ L.toStrict $ junk -- type: B.ByteString
 
 -- XXX problem: rawname is being truncated at the first \0 here so we need a mapping fn instead
 --      in isolation, we could use QP encoding for the filename
