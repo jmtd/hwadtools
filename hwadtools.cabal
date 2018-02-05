@@ -28,3 +28,8 @@ executable wadxtract
   main-is:             wadxtract.hs
   build-depends:       base >=4.9 && <4.10, bytestring >= 0.10, binary >= 0.8, sandi >= 0.4, directory >= 1.2, filepath >= 1.4
   default-language:    Haskell98
+
+executable waddiff
+  main-is:             waddiff.hs
+  build-depends:       base >=4.9 && <4.10, bytestring >= 0.10, binary >= 0.8, sandi >= 0.4, directory >= 1.2, filepath >= 1.4
+  default-language:    Haskell98
