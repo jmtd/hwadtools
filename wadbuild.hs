@@ -14,6 +14,10 @@
 import Text.ParserCombinators.Parsec
 import Test.Framework
 import Data.Char (isSpace)
+import qualified Data.ByteString.Lazy as L
+import qualified Data.ByteString.Lazy.Char8 as LC -- unpack
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as BC
 
 data Wad = Wad { magic   :: WadMagic
                , entries :: [WadInfoCommand]
@@ -92,6 +96,41 @@ wadInfoLump = do
     spaces
     path <- many1 (noneOf "\n")
     return $ WadInfoLump name (read offs) path
+
+------------------------------------------------------------------------------
+-- manipulating WadInfoCommands/building WADs from their instructions
+
+sample_wad1 = Wad PWAD [ WadInfoLabel "MAP01"
+                       , WadInfoLump  "THINGS"   12     "out/THINGS"
+                       , WadInfoLump  "LINEDEFS" 24     "out/LINEDEFS"
+                       , WadInfoLump  "SIDEDEFS" 47976  "out/SIDEDEFS"
+                       , WadInfoLump  "VERTEXES" 253056 "out/VERTEXES"
+                       , WadInfoLump  "SEGS"     263528 "out/SEGS"
+                       , WadInfoLump  "SSECTORS" 346856 "out/SSECTORS"
+                       , WadInfoLump  "NODES"    357996 "out/NODES"
+                       , WadInfoLump  "SECTORS"  435948 "out/SECTORS"
+                       , WadInfoLump  "REJECT"   466212 "out/REJECT"
+                       , WadInfoLump  "BLOCKMAP" 635576 "out/BLOCKMAP"
+                       , WadInfoJunk  22                "=00=00"
+                       , WadInfoJunk  47974             "=00=00"
+                       , WadInfoJunk  635574            "=00=00"
+                       ]
+
+buildWad :: Wad -> L.ByteString
+buildWad (Wad magic dirents) = LC.pack (show magic) where
+    l = length dirents -- how to pack into a string?
+
+-- we actually probably want a different data structure, which represents
+-- e.g. eactly one of IWAD or PWAD, not possibly none, or >1 and not somewhere
+-- in a list in the type.. a record Wad { wadMagic = IWAD | PWAD , directory = [WadInfoCommand]
+-- etc... 
+{-
+buildWadHeader :: [WadInfoCommand] -> L.ByteString
+buildWadHeader [] = empty -- XXX error?
+buildWadHeader (x:xs) | x == PWAD = LC.pack 
+                      | x == IWAD = 
+                      | otherwise = 
+-}
 
 ------------------------------------------------------------------------------
 -- test data
