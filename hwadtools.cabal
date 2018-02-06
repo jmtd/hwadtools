@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                hwadtools
-version:             0.2.0
+version:             0.3.0
 synopsis:            WAD manipulation tools, developed in Haskell
 -- description:
 homepage:            https://github.com/jmtd/hwadtools
@@ -18,18 +18,20 @@ cabal-version:       >=1.10
 
 executable lswad
   main-is:             lswad.hs
-  -- other-modules:
+  other-modules:       Wad
   -- other-extensions:
-  build-depends:       base >=4.9 && <4.10, bytestring >= 0.10, binary >= 0.8
+  build-depends:       base >=4.9 && <4.11, bytestring >= 0.10, binary >= 0.8
   -- hs-source-dirs:
   default-language:    Haskell98
 
 executable wadxtract
   main-is:             wadxtract.hs
-  build-depends:       base >=4.9 && <4.10, bytestring >= 0.10, binary >= 0.8, sandi >= 0.4, directory >= 1.2, filepath >= 1.4
+  other-modules:       Wad
+  build-depends:       base >=4.9 && <4.11, bytestring >= 0.10, binary >= 0.8, sandi >= 0.4, directory >= 1.2, filepath >= 1.4
   default-language:    Haskell98
 
 executable waddiff
   main-is:             waddiff.hs
-  build-depends:       base >=4.9 && <4.10, bytestring >= 0.10, binary >= 0.8, directory >= 1.2, filepath >= 1.4, Diff, pretty
+  other-modules:       Wad
+  build-depends:       base >=4.9 && <4.11, bytestring >= 0.10, binary >= 0.8, directory >= 1.2, filepath >= 1.4, Diff, pretty
   default-language:    Haskell98
