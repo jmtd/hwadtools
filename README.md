@@ -4,7 +4,7 @@
 
 Doom WAD file manipulation tools, written in Haskell.
 
-Copyright © Jonathan Dowland 2017
+Copyright © Jonathan Dowland 2018
 
 ## `lswad`
 
@@ -39,6 +39,41 @@ GL_SSECT
 GL_NODES
 GL_PVS
 WADCSRC
+```
+
+## `waddiff`
+
+A WAD-difference calculator.
+
+### Usage
+
+```
+$ waddiff a.wad b.wad
+```
+
+### Example
+
+```
+--- jonhex.wad
++++ jonhex2.wad
+@@
+ MAP01    (0 bytes)
+ THINGS   (10 bytes)
+-LINEDEFS (47950 bytes)
++LINEDEFS (47950 bytes)
+@@
+ SIDEDEFS (205080 bytes)
+-VERTEXES (9048 bytes)
++VERTEXES (9360 bytes)
++SEGS     (83136 bytes)
++SSECTORS (11024 bytes)
++NODES    (77140 bytes)
+@@
+ SECTORS  (30264 bytes)
++REJECT   (0 bytes)
++BLOCKMAP (16124 bytes)
+@@
+ WADCSRC  (3275 bytes)
 ```
 
 ## `wadxtract`
