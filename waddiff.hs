@@ -9,6 +9,7 @@
 
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
+import qualified Data.ByteString.Lazy.Char8 as LC
 import qualified Data.ByteString.Char8 as C
 import Data.Binary.Get
 import System.IO (stdin, IOMode(..), hSetBinaryMode, openFile, Handle)
@@ -16,6 +17,7 @@ import System.Environment (getArgs)
 import Data.Algorithm.Diff
 import Data.Algorithm.DiffContext
 import Text.PrettyPrint
+import Data.Int (Int32)
 
 import Wad
 
@@ -38,26 +40,30 @@ getHandles = do
     hSetBinaryMode handle2 True
     return (handle1,handle2)
 
-printDir :: DirEnt -> IO String
+-- XXX rename
+printDir :: DirEnt -> IO (String, Int32, Int32)
 printDir (offs,size,rawname) = do
-    return $ name ++ "\t" ++ (show size)
-    where
+    return $ (name,size,offs) where
         name = (clean . L.toStrict) rawname
 
-getEntries :: Handle -> IO ([String])
+getEntries :: Handle -> IO ([(String, Int32, Int32)])
 getEntries h = do
     input <- L.hGetContents h
     let (numents,waddir) = runGet getWadDirectory input
     let dirents = runGet (parseDirectory numents) waddir
     mapM printDir dirents
 
-textCompare :: [String] -> [String] -> String
-textCompare as bs = render bar where
-    bar = prettyContextDiff (char 'a') (char 'b') text baz -- :: Doc
-    baz = getContextDiff 3 as bs
+-- ContextDiff constructor not in scope
+--textCompare :: ContextDiff String -> String
+textCompare x = render $ prettyContextDiff (char 'a') (char 'b') text x
 
 main = do
     (handle1, handle2) <- getHandles
-    names1 <- getEntries handle1
-    names2 <- getEntries handle2
-    putStrLn $ textCompare names1 names2
+    entries1 <- getEntries handle1
+    entries2 <- getEntries handle2
+    let names1 = map (\(a,b,c)->a) entries1
+        names2 = map (\(a,b,c)->a) entries2
+        in
+        putStrLn $ textCompare $ getContextDiff 3 names1 names2
+
+-- XXX working but temp. regression, not catching diff-sizes entries
