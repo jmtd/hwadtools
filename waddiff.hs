@@ -55,14 +55,18 @@ getEntries h = do
         in
         return $ map mkEntry dirents
 
-textCompare x = render $ prettyContextDiff (char 'a') (char 'b') (text.show) x
+textCompare x a b = render $ prettyContextDiff (text a) (text b) (text.show) x
 
 main = do
+    args <- getArgs
     (handle1, handle2) <- getHandles
     entries1 <- getEntries handle1
     entries2 <- getEntries handle2
-    let diff = getContextDiff 3 entries1 entries2 in
-        putStrLn $ textCompare diff
+    let diff = getContextDiff 3 entries1 entries2
+        file1 = head args
+        file2 = head $ tail args
+        in
+        putStrLn $ textCompare diff file1 file2
 
 ------------------------------------------------------------------------------
 -- test data
