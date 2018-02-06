@@ -105,8 +105,8 @@ possibleJunkEntries' :: L.ByteString -> Handle -> Int32 -> [DirEnt] -> IO ()
 possibleJunkEntries' _ _ _ [] = return ()
 possibleJunkEntries' wad fh fpos ((offs,size,name):ds) = do
     if   fpos /= offs
-    then hPutStr fh $ "junk " ++ (show fpos) ++ " " ++ enc ++ "\n"
-    else return ()
+        then hPutStr fh $ "junk " ++ (show fpos) ++ " " ++ enc ++ "\n"
+            else return ()
     possibleJunkEntries' wad fh (offs+size) ds
     where
         hole = offs - fpos -- XXX possibly negative?
