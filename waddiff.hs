@@ -40,30 +40,35 @@ getHandles = do
     hSetBinaryMode handle2 True
     return (handle1,handle2)
 
--- XXX rename
-printDir :: DirEnt -> IO (String, Int32, Int32)
-printDir (offs,size,rawname) = do
-    return $ (name,size,offs) where
-        name = (clean . L.toStrict) rawname
+data WadEntry = WadEntry String Integer L.ByteString deriving (Eq)
 
-getEntries :: Handle -> IO ([(String, Int32, Int32)])
+-- we don't try and show the whole lump
+instance Show WadEntry where
+    show (WadEntry n l d) = n ++ " (" ++ (show l) ++ " bytes)"
+
+getEntries :: Handle -> IO ([WadEntry])
 getEntries h = do
     input <- L.hGetContents h
     let (numents,waddir) = runGet getWadDirectory input
-    let dirents = runGet (parseDirectory numents) waddir
-    mapM printDir dirents
+        dirents = runGet (parseDirectory numents) waddir
+        mkEntry (o,s,r) = WadEntry (clean.L.toStrict $ r) (fromIntegral s) (L.take (fromIntegral s) $ L.drop (fromIntegral o) input)
+        in
+        return $ map mkEntry dirents
 
--- ContextDiff constructor not in scope
---textCompare :: ContextDiff String -> String
-textCompare x = render $ prettyContextDiff (char 'a') (char 'b') text x
+textCompare x = render $ prettyContextDiff (char 'a') (char 'b') (text.show) x
 
 main = do
     (handle1, handle2) <- getHandles
     entries1 <- getEntries handle1
     entries2 <- getEntries handle2
-    let names1 = map (\(a,b,c)->a) entries1
-        names2 = map (\(a,b,c)->a) entries2
-        in
-        putStrLn $ textCompare $ getContextDiff 3 names1 names2
+    let diff = getContextDiff 3 entries1 entries2 in
+        putStrLn $ textCompare diff
 
--- XXX working but temp. regression, not catching diff-sizes entries
+------------------------------------------------------------------------------
+-- test data
+
+test1 = [ WadEntry "HI" 2 $ LC.pack "hi"
+        , WadEntry "There" 5 $ LC.pack "there"
+        ]
+
+test2 = (WadEntry "yo" 2 $ LC.pack "yo"):test1
