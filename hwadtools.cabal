@@ -4,8 +4,11 @@
 name:                hwadtools
 version:             0.3.0
 synopsis:            WAD manipulation tools, developed in Haskell
--- description:
-homepage:            https://github.com/jmtd/hwadtools
+description:
+    <https://jmtd.net/software/hwadtools HWadTools> is a suite of simple tools
+    for hacking on DOOM and related computer game engines. The name is inspired
+    by an older collection of tools, xwadtools.
+homepage:            https://jmtd.net/software/hwadtools
 license:             GPL-3
 license-file:        LICENSE
 author:              Jonathan Dowland
