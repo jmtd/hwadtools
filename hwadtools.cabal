@@ -44,3 +44,9 @@ executable wadcat
   other-modules:       Wad
   build-depends:       base >=4.9 && <4.11, bytestring >= 0.10, binary >= 0.8
   default-language:    Haskell98
+
+executable wadstats
+  main-is:             wadstats.hs
+  other-modules:       Wad
+  build-depends:       base >=4.9 && <4.11, bytestring >= 0.10, binary >= 0.8, directory >= 1.2, filepath >= 1.4, containers, Unique
+  default-language:    Haskell98
