@@ -10,6 +10,7 @@ import Data.List (sortBy)
 import System.FilePath --(</>)
 import Codec.Binary.QuotedPrintable (encode)
 import Data.Int (Int32)
+import Data.Binary (decode)
 
 import Wad
 
@@ -45,6 +46,7 @@ maplumps = [ "BEHAVIOR"  -- Hexen only (and zdoom?)
 usage = do
     error "usage: blah"
 
+getHandle :: IO (Handle, String)
 getHandle = do
     args <- getArgs
     handle <- if length args /= 2
@@ -75,18 +77,19 @@ myEncode' bs | bs == L.empty = bs
         tail = myEncode' $ L.tail bs
 
 wadInfoEntry :: DirEnt -> String
-wadInfoEntry (offs,size,rawname) =
+wadInfoEntry (DirEnt offs size rawname) =
     if 0 == size
         then "label " ++ encname
         else "lump " ++ encname ++ " " ++ (show offs) ++ " " ++ "path/to/lump/XXX"
     where
         encname = myEncode rawname
 
+writewadInfo :: L.ByteString -> [DirEnt] -> FilePath -> IO ()
 writewadInfo wad dirents outdir = do
     fh <- openFile (outdir </> "wadinfo.txt") WriteMode
 
-    let (magic,_,_) = runGet deserialiseHeader wad
-    case (LC.unpack magic) of
+    let header = decode wad :: WadHeader
+    case (LC.unpack $ magic header) of
         "IWAD" -> hPutStr fh "IWAD\n"
         "PWAD" -> hPutStr fh "PWAD\n"
         _ -> return () -- XXX: invalid magic
@@ -99,11 +102,11 @@ writewadInfo wad dirents outdir = do
 possibleJunkEntries :: L.ByteString -> Handle -> [DirEnt] -> IO ()
 possibleJunkEntries wad fh dirents = do
     possibleJunkEntries' wad fh 12 (sortBy sortfn dirents) where
-        sortfn (x,_,_) (y,_,_) = compare x y
+        sortfn (DirEnt x _ _) (DirEnt y _ _) = compare x y
 
 possibleJunkEntries' :: L.ByteString -> Handle -> Int32 -> [DirEnt] -> IO ()
 possibleJunkEntries' _ _ _ [] = return ()
-possibleJunkEntries' wad fh fpos ((offs,size,name):ds) = do
+possibleJunkEntries' wad fh fpos ((DirEnt offs size name):ds) = do
     if   fpos /= offs
         then hPutStr fh $ "junk " ++ (show fpos) ++ " " ++ enc ++ "\n"
             else return ()
@@ -120,7 +123,7 @@ possibleJunkEntries' wad fh fpos ((offs,size,name):ds) = do
 -- XXX another problem: we need to recognise MAP markers and bundle such lumps together
 --      oh wait maybe this is the hard one
 writeLump :: L.ByteString -> FilePath -> DirEnt -> IO ()
-writeLump input outdir (offs',size',rawname) =
+writeLump input outdir (DirEnt offs' size' rawname) =
     if size == 0
     then -- label; skip
         return ()
@@ -135,10 +138,10 @@ writeLump input outdir (offs',size',rawname) =
 writeLumps :: L.ByteString -> FilePath -> [DirEnt] -> IO ()
 writeLumps input outdir dirents = mapM_ (writeLump input outdir) dirents
 
+extractWad :: Handle -> String -> IO ()
 extractWad handle outdir = do
     input  <- L.hGetContents handle
-    let (numents,waddir) = runGet getWadDirectory input
-    let dirents = runGet (parseDirectory numents) waddir
+    let dirents = wadDirEnts input
     writewadInfo input dirents outdir
     writeLumps input outdir dirents
 

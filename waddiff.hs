@@ -49,9 +49,8 @@ instance Show WadEntry where
 getEntries :: Handle -> IO ([WadEntry])
 getEntries h = do
     input <- L.hGetContents h
-    let (numents,waddir) = runGet getWadDirectory input
-        dirents = runGet (parseDirectory numents) waddir
-        mkEntry (o,s,r) = WadEntry (clean.L.toStrict $ r) (fromIntegral s) (L.take (fromIntegral s) $ L.drop (fromIntegral o) input)
+    let dirents = wadDirEnts input
+        mkEntry (DirEnt o s r) = WadEntry (clean.L.toStrict $ r) (fromIntegral s) (L.take (fromIntegral s) $ L.drop (fromIntegral o) input)
         in
         return $ map mkEntry dirents
 

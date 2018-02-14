@@ -1,7 +1,7 @@
 {-
     lswad.hs: list the contents of Doom WAD files
     Part of HWadTools
-    Copyright © Jonathan Dowland 2017
+    Copyright © Jonathan Dowland 2018
 
     Distributed under the terms of the GNU GPL Version 3
     See file LICENSE
@@ -10,6 +10,7 @@
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
 import qualified Data.ByteString.Char8 as C
+import Data.Binary (decode)
 import Data.Binary.Get
 import System.IO (stdin, IOMode(..), hSetBinaryMode, openFile)
 import System.Environment (getArgs)
@@ -41,17 +42,13 @@ getHandle = do
     return handle
 
 printDir :: DirEnt -> IO ()
-printDir (offs,size,rawname) = do
+printDir (DirEnt offs size rawname) = do
     putStrLn $ name ++ "\t" ++ ((pad.show) size) ++ "\t" ++ (show offs)
     where
         name = (clean . L.toStrict) rawname
 
-header = "  name  \t  size  \t offset "
-
 main = do
     handle <- getHandle
     input  <- L.hGetContents handle
-    let (numents,waddir) = runGet getWadDirectory input
-    let dirents = runGet (parseDirectory numents) waddir
-    putStrLn header
-    mapM_ printDir dirents
+    putStrLn "  name  \t  size  \t offset "
+    mapM_ printDir $ wadDirEnts input
