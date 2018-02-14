@@ -6,6 +6,8 @@ Doom WAD file manipulation tools, written in Haskell.
 
 Copyright © Jonathan Dowland 2018
 
+<https://jmtd.net/software/hwadtools>
+
 ## `lswad`
 
 A simple tool to list the contents of WAD files.
