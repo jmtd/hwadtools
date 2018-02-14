@@ -38,3 +38,9 @@ executable waddiff
   other-modules:       Wad
   build-depends:       base >=4.9 && <4.11, bytestring >= 0.10, binary >= 0.8, directory >= 1.2, filepath >= 1.4, Diff, pretty
   default-language:    Haskell98
+
+executable wadcat
+  main-is:             wadcat.hs
+  other-modules:       Wad
+  build-depends:       base >=4.9 && <4.11, bytestring >= 0.10, binary >= 0.8, directory >= 1.2, filepath >= 1.4
+  default-language:    Haskell98
