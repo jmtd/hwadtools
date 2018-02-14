@@ -76,6 +76,20 @@ $ waddiff a.wad b.wad
  WADCSRC  (3275 bytes)
 ```
 
+## `wadcat`
+
+Concatenate WAD files.
+
+### Usage
+
+```
+$ wadcat 1.wad 2.wad 3.wad … out.wad
+```
+
+The input files `1.wad`, `2.wad`, `3.wad` (…) are read in and their lumps
+concatenated into the output PWAD `out.wad`. The output PWAD's directory is
+assembled from the inputs with appropriate offsets adjustments applied.
+
 ## `wadxtract`
 
 A basic WAD extractor.
