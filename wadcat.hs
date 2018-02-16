@@ -7,32 +7,37 @@
     See file LICENSE
  -}
 
-import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
 import qualified Data.ByteString.Lazy.Char8 as LC
-import qualified Data.ByteString.Char8 as C
 import Data.Binary (encode, decode)
-import Data.Binary.Get
-import System.IO (stdin, IOMode(..), hSetBinaryMode, openFile, Handle, hClose)
-import System.Environment (getArgs)
 import Data.Int (Int32)
+import System.Exit (exitFailure)
+import System.Environment (getArgs)
+import System.IO
 
 import Wad
 
-getHandles :: IO ([Handle], Handle)
+getHandles :: IO [Handle]
 getHandles = do
     args    <- getArgs
-    out     <- openFile (head $ reverse args) WriteMode
-    handles <- mapM (\x-> openFile x ReadMode) $ (reverse.tail.reverse) args
+    handles <- mapM (\x-> openFile x ReadMode) args
 
-    hSetBinaryMode out True
     mapM_ (\x->hSetBinaryMode x True) handles
 
-    return (handles, out)
+    return handles
+
+ensureOutputRedirected :: IO ()
+ensureOutputRedirected = do
+    redirected <- fmap not $ hIsTerminalDevice stdout
+    if redirected then return () else do
+        hPutStrLn stderr "Error: standard output is a terminal. You must redirect wadcat's output."
+        exitFailure
 
 main = do
-    (handles, out) <- getHandles
-    inputs         <- mapM L.hGetContents handles -- :: [L.ByteString]
+    ensureOutputRedirected
+
+    handles <- getHandles
+    inputs  <- mapM L.hGetContents handles -- :: [L.ByteString]
 
     let dirs       = map wadDirEnts inputs -- :: [[DirEnt]]
         headers    = map decode inputs :: [WadHeader]
@@ -41,14 +46,13 @@ main = do
         outHeader  = WadHeader (LC.pack "PWAD") outNuments (fromIntegral outDiroffs)
         outDirs    = offsetDirEnts 0 (zip headers dirs)
         in do
-            L.hPut out (encode outHeader)
-            mapM_ (writeLumps out) $ zip headers inputs
-            mapM_ (L.hPut out) $ concat $ map (map encode) outDirs
-            hClose out
+            L.putStr         $ encode outHeader
+            mapM_ writeLumps $ zip headers inputs
+            mapM_ L.putStr   $ concat $ map (map encode) outDirs
 
-writeLumps :: Handle -> (WadHeader, L.ByteString) -> IO ()
-writeLumps out (header,input) = do
-    L.hPut out $ drop wadHeaderSize $ take (diroffs header) input
+writeLumps :: (WadHeader, L.ByteString) -> IO ()
+writeLumps (header,input) = do
+    L.putStr $ drop wadHeaderSize $ take (diroffs header) input
     where
         take x = L.take (fromIntegral x)
         drop x = L.drop (fromIntegral x)
