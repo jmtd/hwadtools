@@ -1,5 +1,8 @@
 # HWadTools
 
+> *<zokum> wadcat, it does exactly what I think it does?*
+> *<zokum> or is it a tool to replace all textures with images of cats*
+
 ## About
 
 Doom WAD file manipulation tools, written in Haskell.
