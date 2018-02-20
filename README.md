@@ -1,7 +1,7 @@
 # HWadTools
 
-> *<zokum> wadcat, it does exactly what I think it does?*
-> *<zokum> or is it a tool to replace all textures with images of cats*
+> *&lt;zokum&gt; wadcat, it does exactly what I think it does?*<br />
+> *&lt;zokum&gt; or is it a tool to replace all textures with images of cats*
 
 ## About
 
