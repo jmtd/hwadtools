@@ -33,29 +33,34 @@ ensureOutputRedirected = do
         hPutStrLn stderr "Error: standard output is a terminal. You must redirect wadcat's output."
         exitFailure
 
+
+wadcat :: [L.ByteString] -> L.ByteString
+wadcat inputs = let
+    dirs       = map wadDirEnts inputs -- :: [[DirEnt]]
+    headers    = map decode inputs :: [WadHeader]
+    outNuments = fromIntegral $ sum $ map length dirs
+    outDiroffs = wadHeaderSize + (fromIntegral $ sum $ map (\wh->((diroffs wh) - (fromIntegral wadHeaderSize))) headers)
+    outHeader  = encode $ WadHeader (LC.pack "PWAD") outNuments (fromIntegral outDiroffs)
+    outDirs    = offsetDirEnts 0 (zip headers dirs)
+    outLumps   = map pureWriteLumps (zip headers inputs)
+    in L.concat $ outHeader:outLumps ++ (concat $ map (map encode) outDirs)
+
 main = do
     ensureOutputRedirected
 
     handles <- getHandles
     inputs  <- mapM L.hGetContents handles -- :: [L.ByteString]
 
-    let dirs       = map wadDirEnts inputs -- :: [[DirEnt]]
-        headers    = map decode inputs :: [WadHeader]
-        outNuments = fromIntegral $ sum $ map length dirs
-        outDiroffs = wadHeaderSize + (fromIntegral $ sum $ map (\wh->((diroffs wh) - (fromIntegral wadHeaderSize))) headers)
-        outHeader  = WadHeader (LC.pack "PWAD") outNuments (fromIntegral outDiroffs)
-        outDirs    = offsetDirEnts 0 (zip headers dirs)
-        in do
-            L.putStr         $ encode outHeader
-            mapM_ writeLumps $ zip headers inputs
-            mapM_ L.putStr   $ concat $ map (map encode) outDirs
+    L.putStr (wadcat inputs)
 
-writeLumps :: (WadHeader, L.ByteString) -> IO ()
-writeLumps (header,input) = do
-    L.putStr $ drop wadHeaderSize $ take (diroffs header) input
+pureWriteLumps :: (WadHeader, L.ByteString) -> L.ByteString
+pureWriteLumps (header,input) = drop wadHeaderSize $ take (diroffs header) input
     where
         take x = L.take (fromIntegral x)
         drop x = L.drop (fromIntegral x)
+
+writeLumps :: (WadHeader, L.ByteString) -> IO ()
+writeLumps (header,input) = L.putStr $ pureWriteLumps (header,input)
 
 offsetDirEnts :: Int32 -> [(WadHeader, [DirEnt])] -> [[DirEnt]]
 offsetDirEnts _ [] = []
