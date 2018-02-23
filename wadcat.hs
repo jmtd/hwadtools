@@ -42,7 +42,7 @@ wadcat inputs = let
     outDiroffs = wadHeaderSize + (fromIntegral $ sum $ map (\wh->((diroffs wh) - (fromIntegral wadHeaderSize))) headers)
     outHeader  = encode $ WadHeader (LC.pack "PWAD") outNuments (fromIntegral outDiroffs)
     outDirs    = offsetDirEnts 0 (zip headers dirs)
-    outLumps   = map pureWriteLumps (zip headers inputs)
+    outLumps   = map writeLumps (zip headers inputs)
     in L.concat $ outHeader:outLumps ++ (concat $ map (map encode) outDirs)
 
 main = do
@@ -53,14 +53,11 @@ main = do
 
     L.putStr (wadcat inputs)
 
-pureWriteLumps :: (WadHeader, L.ByteString) -> L.ByteString
-pureWriteLumps (header,input) = drop wadHeaderSize $ take (diroffs header) input
+writeLumps :: (WadHeader, L.ByteString) -> L.ByteString
+writeLumps (header,input) = drop wadHeaderSize $ take (diroffs header) input
     where
         take x = L.take (fromIntegral x)
         drop x = L.drop (fromIntegral x)
-
-writeLumps :: (WadHeader, L.ByteString) -> IO ()
-writeLumps (header,input) = L.putStr $ pureWriteLumps (header,input)
 
 offsetDirEnts :: Int32 -> [(WadHeader, [DirEnt])] -> [[DirEnt]]
 offsetDirEnts _ [] = []
