@@ -7,6 +7,9 @@
 
 Doom WAD file manipulation tools, written in Haskell.
 
+*hwadtools* is inspired by *xwadtools*. See [xwadtools](xwadtools.md) for
+a tool-by-tool comparison.
+
 Copyright © Jonathan Dowland 2018
 
 <https://jmtd.net/software/hwadtools>
