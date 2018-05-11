@@ -98,9 +98,27 @@ The input files `1.wad`, `2.wad`, `3.wad` (…) are read in and their lumps
 concatenated into the output PWAD `out.wad`. The output PWAD's directory is
 assembled from the inputs with appropriate offsets adjustments applied.
 
+## `wadstats`
+
+Prints out some statistics about the input WAD, in YAML format.
+
+### Usage
+
+```
+$ wadstats input.wad
+- E1M1:
+    vertices: 4
+    sectors: 1
+    linedefs: 4
+    things:
+      count: 1
+      Singleplayer:
+       "player 1 start": 1
+```
+
 ## `wadxtract`
 
-A basic WAD extractor.
+A basic WAD extractor. Experimental.
 
 ### Usage
 
