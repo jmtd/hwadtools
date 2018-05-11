@@ -91,7 +91,7 @@ Concatenate WAD files.
 ### Usage
 
 ```
-$ wadcat 1.wad 2.wad 3.wad … out.wad
+$ wadcat 1.wad 2.wad 3.wad … > out.wad
 ```
 
 The input files `1.wad`, `2.wad`, `3.wad` (…) are read in and their lumps
