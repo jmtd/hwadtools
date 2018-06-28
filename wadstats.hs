@@ -21,6 +21,7 @@ import Data.Char (toUpper)
 
 import Wad
 import Bits
+import Util
 
 import qualified Data.IntMap.Strict as M
 import qualified Doom.Things as T
@@ -30,14 +31,6 @@ main = do
     input  <- L.hGetContents handle
     let dirents = wadDirEnts input
     mapStats dirents input
-
-getHandle = do
-    args <- getArgs
-    handle <- if args == []
-              then return stdin
-              else openFile (head args) ReadMode
-    hSetBinaryMode handle True
-    return handle
 
 mapStats :: [DirEnt] -> L.ByteString -> IO ()
 mapStats ds input = case nextMapLabel ds of

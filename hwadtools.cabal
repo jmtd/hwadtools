@@ -21,7 +21,7 @@ cabal-version:       >=1.10
 
 executable lswad
   main-is:             lswad.hs
-  other-modules:       Wad
+  other-modules:       Wad, Util
   -- other-extensions:
   build-depends:       base >=4.9 && <4.11, bytestring >= 0.10, binary >= 0.8
   -- hs-source-dirs:
@@ -47,6 +47,6 @@ executable wadcat
 
 executable wadstats
   main-is:             wadstats.hs
-  other-modules:       Wad, Doom.Things, Bits
+  other-modules:       Wad, Doom.Things, Bits, Util
   build-depends:       base >=4.9 && <4.11, bytestring >= 0.10, binary >= 0.8, directory >= 1.2, filepath >= 1.4, containers, Unique
   default-language:    Haskell98
