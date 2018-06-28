@@ -13,6 +13,7 @@ things = IntMap.fromList [
     ( 7, "spidermastermind"),
     ( 8, "backpack"),
     ( 9, "formersergeant"),
+    ( 11, "deathmatchstart" ),
     ( 13, "redkeycard"),
     ( 16, "cyberdemon"),
     ( 17, "cellchargepack"),
