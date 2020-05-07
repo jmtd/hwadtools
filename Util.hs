@@ -2,7 +2,7 @@ module Util(clean,pad,getHandle) where
 
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C
-import System.IO (stdin, IOMode(..), hSetBinaryMode, openFile)
+import System.IO (stdin, IOMode(..), hSetBinaryMode, openFile, Handle)
 import System.Environment (getArgs)
 
 clean :: B.ByteString -> String
@@ -18,6 +18,7 @@ clean bs = clean' bs 8 where
 pad :: String -> String
 pad s = s ++ (replicate (8 - (length s)) ' ')
 
+getHandle :: IO Handle
 getHandle = do
     args <- getArgs
     handle <- if args == []

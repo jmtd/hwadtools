@@ -13,32 +13,14 @@ import qualified Data.ByteString.Lazy.Char8 as LC
 import qualified Data.ByteString.Char8 as C
 import Data.Binary.Get
 import System.IO (stdin, IOMode(..), hSetBinaryMode, openFile, Handle)
-import System.Environment (getArgs)
+import System.Environment (getArgs, withArgs)
 import Data.Algorithm.Diff
 import Data.Algorithm.DiffContext
 import Text.PrettyPrint
 import Data.Int (Int32)
 
 import Wad
-
-clean :: B.ByteString -> String
-clean bs = clean' bs 8 where
-    clean' _ 0 = ""
-    clean' bs n | bs == B.empty = replicate n ' '
-                | head == '\0'  = replicate n ' '
-                | otherwise     = head : (clean' tail (n-1))
-        where
-            head = C.head bs
-            tail = C.tail bs
-
-getHandles :: IO (Handle, Handle)
-getHandles = do
-    args <- getArgs
-    handle1 <-  openFile (head args) ReadMode
-    handle2 <-  openFile (head $ tail args) ReadMode
-    hSetBinaryMode handle1 True
-    hSetBinaryMode handle2 True
-    return (handle1,handle2)
+import Util
 
 data WadEntry = WadEntry String Integer L.ByteString deriving (Eq)
 
@@ -46,26 +28,30 @@ data WadEntry = WadEntry String Integer L.ByteString deriving (Eq)
 instance Show WadEntry where
     show (WadEntry n l d) = n ++ " (" ++ (show l) ++ " bytes)"
 
+mkEntry input (DirEnt o s r) = let
+    s' = fromIntegral s
+    s''= fromIntegral s
+    o' = fromIntegral o
+    in WadEntry (clean . L.toStrict $ r) s' (L.take s'' . L.drop o' $ input)
+
 getEntries :: Handle -> IO ([WadEntry])
 getEntries h = do
     input <- L.hGetContents h
-    let dirents = wadDirEnts input
-        mkEntry (DirEnt o s r) = WadEntry (clean.L.toStrict $ r) (fromIntegral s) (L.take (fromIntegral s) $ L.drop (fromIntegral o) input)
-        in
-        return $ map mkEntry dirents
+    return $ map (mkEntry input) (wadDirEnts input)
 
-textCompare x a b = render $ prettyContextDiff (text a) (text b) (text.show) x
+textCompare a b = render . prettyContextDiff (text a) (text b) (text.show)
 
 main = do
-    args <- getArgs
-    (handle1, handle2) <- getHandles
+    args     <- getArgs
+    handle1  <- getHandle
+    handle2  <- withArgs (tail args) getHandle
     entries1 <- getEntries handle1
     entries2 <- getEntries handle2
-    let diff = getContextDiff 3 entries1 entries2
-        file1 = head args
-        file2 = head $ tail args
+    let diff  = getContextDiff 3 entries1 entries2
+        file1 = args !! 0
+        file2 = args !! 1
         in
-        putStrLn $ textCompare diff file1 file2
+        putStrLn $ textCompare file1 file2 diff
 
 ------------------------------------------------------------------------------
 -- test data
